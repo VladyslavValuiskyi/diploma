@@ -1,0 +1,36 @@
+server:
+  port: 8086
+spring:
+  profiles:
+    active: local
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/demo
+    username: postgres
+    password: 2901wlad
+    driverClassName: org.postgresql.Driver
+    maximumPoolSize: 10
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    show-sql: false
+    hibernate.ddl-auto: update
+application:
+  api.version.prefix: /
+  default.page.size: 100
+  apiKey: J7ET964Z3EGU4RY4E1R7789991WMF4KE1P
+  security:
+    password:
+      sault1: y2R1D7gk5x10PadS4EfX
+      sault2: CuvPf2xQ9B5DPS05uqPP
+    jwt:
+      tokenExpirationMinutes: 1440
+      tokenIssuer: http://localhost:8080/
+      tokenSigningKey: asdf354kvkjd09567lkjasdf723jdlijr
+swagger:
+  apiTitle: API Service
+  apiDescription: Arcitecture Service API
+  groupName: api
+  securedPaths:
+    - /url
+    - /url/**
+
