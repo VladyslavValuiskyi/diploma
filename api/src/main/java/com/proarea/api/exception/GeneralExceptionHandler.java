@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -65,6 +66,13 @@ public class GeneralExceptionHandler extends ResponseEntityExceptionHandler {
     public ErrorResponse handleException(BadRequestException ex, HttpServletRequest request) {
         log.error("URI={}, {}", request.getRequestURI(), ex);
         return ErrorResponse.of(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request.getRequestURI());
+    }
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public ErrorResponse handleException(AccessDeniedException ex, HttpServletRequest request) {
+        log.error("URI={}, {}", request.getRequestURI(), ex);
+        return ErrorResponse.of(ex.getMessage(), HttpStatus.FORBIDDEN.value(), request.getRequestURI());
     }
 
 }

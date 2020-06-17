@@ -1,5 +1,7 @@
 package com.proarea.api.security.jwt;
 
+import com.proarea.api.model.entity.AuthoritiesEntity;
+import com.proarea.api.repository.AuthoritiesRepository;
 import com.proarea.api.security.model.UserDetails;
 import com.proarea.api.security.model.UserResponse;
 import com.proarea.api.security.web.Messages;
@@ -14,7 +16,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,9 +30,11 @@ public class JwtTokenBuilder {
     public static final String USER = "user";
 
     private final JwtSettings settings;
+    private AuthoritiesRepository authoritiesRepository;
 
-    public JwtTokenBuilder(JwtSettings settings) {
+    public JwtTokenBuilder(JwtSettings settings, AuthoritiesRepository authoritiesRepository) {
         this.settings = settings;
+        this.authoritiesRepository = authoritiesRepository;
     }
 
     public String encodeToken(UserResponse userResponse) {
@@ -52,7 +60,8 @@ public class JwtTokenBuilder {
         }
         Claims claims = Jwts.claims().setSubject(user.getUsername());
         claims.put(USER, userResponse);
-        claims.put(CLAIM_AUTHORITIES, user.getAuthorities().stream().map(Object::toString).collect(Collectors.toList()));
+        claims.put(CLAIM_AUTHORITIES, authoritiesRepository.findAllByUserId(userResponse.getId()).stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+//        claims.put(CLAIM_AUTHORITIES, user.getAuthorities().stream().map(Object::toString).collect(Collectors.toList()));
         LocalDateTime currentTime = DateUtils.now();
         return Jwts.builder().setClaims(claims).setIssuer(settings.getTokenIssuer()).setIssuedAt(DateUtils.toDate(currentTime))
                 .setExpiration(DateUtils.toDate(currentTime.plusMinutes(settings.getTokenExpirationMinutes())))
@@ -68,7 +77,11 @@ public class JwtTokenBuilder {
             String username = claims.getBody().getSubject();
             List<String> scopes = claims.getBody().get(CLAIM_AUTHORITIES, List.class);
 
-            List<GrantedAuthority> authorities = scopes.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+            List<GrantedAuthority> authorities = scopes
+                    .stream()
+                    .map((Function<Object, GrantedAuthority>) linkedHashMap -> () -> ((LinkedHashMap) linkedHashMap).get("authority").toString())
+                    .collect(Collectors.toList());
+//            List<GrantedAuthority> authorities = new ArrayList<>(Collections.singleton((GrantedAuthority) () -> "ROLE_USER"));
             User user = new User(username, "", authorities);
             log.debug("[JwtTokenBuilder] [decodeToken] [{}].", user);
             return user;

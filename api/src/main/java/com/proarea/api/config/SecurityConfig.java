@@ -8,6 +8,7 @@ import com.proarea.api.security.jwt.JwtSettings;
 import com.proarea.api.security.jwt.JwtTokenBuilder;
 import com.proarea.api.security.jwt.TokenAuthenticationProvider;
 import com.proarea.api.security.web.*;
+import com.proarea.api.service.UserDetailsServiceImplementation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,6 +34,7 @@ import java.util.Arrays;
 @Slf4j
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/**";
@@ -44,21 +47,30 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AuthoritiesRepository authoritiesRepository;
 
+    private final UserDetailsServiceImplementation userDetailsService;
+
 
     @Value("${application.api.version.prefix}")
     private String apiPrefix;
 
     @Autowired
-    public SecurityConfig(DataSource dataSource, UserRepository userRepository, AuthoritiesRepository authoritiesRepository) {
+    public SecurityConfig(DataSource dataSource, UserRepository userRepository, AuthoritiesRepository authoritiesRepository, UserDetailsServiceImplementation userDetailsService) {
         this.dataSource = dataSource;
         this.userRepository = userRepository;
         this.authoritiesRepository = authoritiesRepository;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Autowired
+    public void configAuthentication(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService);
+
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         log.trace("[SecurityConfig] [configure auth providers]");
-        auth.authenticationProvider(tokenAuthenticationProvider());
+        auth.authenticationProvider(tokenAuthenticationProvider(authoritiesRepository));
         auth.jdbcAuthentication().dataSource(dataSource).authoritiesByUsernameQuery("select user_id, authority from authorities where user_id = (select user_id from users where username = ?)").passwordEncoder(passwordEncryptor());
     }
 
@@ -76,12 +88,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/url/*").permitAll()
                 .antMatchers(HttpMethod.GET, "/console/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/registration").permitAll()
-                .antMatchers(HttpMethod.POST, "/esp/register").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/password/restore").permitAll()
-                .antMatchers(HttpMethod.POST, "/esp/data").permitAll()
+                .antMatchers(HttpMethod.POST, "/plants/add").hasRole("ADMIN")
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new CorsFilter(), ChannelProcessingFilter.class)
-                .addFilterBefore(loginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(loginProcessingFilter(authoritiesRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(restTokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
@@ -100,8 +111,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public TokenAuthenticationProvider tokenAuthenticationProvider() {
-        return new TokenAuthenticationProvider(jwtTokenBuilder(), userRepository);
+    public TokenAuthenticationProvider tokenAuthenticationProvider(AuthoritiesRepository authoritiesRepository) {
+        return new TokenAuthenticationProvider(jwtTokenBuilder(authoritiesRepository), userRepository);
     }
 
     @Bean
@@ -109,8 +120,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new WebAuthenticationUnsuccessfulHandler(objectMapper());
     }
 
-    private LoginProcessingFilter loginProcessingFilter() throws Exception {
-        LoginProcessingFilter filter = new LoginProcessingFilter(LOGIN_ENTRY_POINT, objectMapper(), jwtTokenBuilder(),
+    private LoginProcessingFilter loginProcessingFilter(AuthoritiesRepository authoritiesRepository) throws Exception {
+        LoginProcessingFilter filter = new LoginProcessingFilter(LOGIN_ENTRY_POINT, objectMapper(), jwtTokenBuilder(authoritiesRepository),
                 webAuthenticationUnsuccessfulHandler(), userRepository, authoritiesRepository);
         filter.setAuthenticationManager(authenticationManagerBean());
         return filter;
@@ -122,8 +133,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public JwtTokenBuilder jwtTokenBuilder() {
-        return new JwtTokenBuilder(jwtSettings());
+    public JwtTokenBuilder jwtTokenBuilder(AuthoritiesRepository authoritiesRepository) {
+        return new JwtTokenBuilder(jwtSettings(), authoritiesRepository);
     }
 
     @Bean
