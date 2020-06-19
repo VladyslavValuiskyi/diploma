@@ -41,4 +41,7 @@ public class PlantRequestEntity {
     @CreationTimestamp
     private Date createdAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
 }

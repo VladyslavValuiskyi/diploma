@@ -2,6 +2,7 @@ package com.proarea.api.controller;
 
 import com.proarea.api.Application;
 import com.proarea.api.model.request.PlantAddRequest;
+import com.proarea.api.model.request.PlantRequestAccept;
 import com.proarea.api.model.response.PlantRequestResponse;
 import com.proarea.api.service.PlantRequestService;
 import io.swagger.annotations.ApiOperation;
@@ -35,8 +36,8 @@ public class PlantRequestController {
     @Secured("ROLE_ADMIN")
     @ApiOperation(value = "Accept plant request", authorizations = @Authorization("Authorization"))
     @RequestMapping(value = "/plant-request/accept/{id}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public PlantRequestResponse acceptPlantRequest(@PathVariable Long id) {
-        return plantRequestService.acceptPlantRequest(id);
+    public PlantRequestResponse acceptPlantRequest(@PathVariable Long id, @RequestBody(required = false) PlantRequestAccept plantRequestAccept) {
+        return plantRequestService.acceptPlantRequest(id, plantRequestAccept);
     }
 
     @Secured("ROLE_ADMIN")

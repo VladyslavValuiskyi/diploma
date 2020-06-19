@@ -38,4 +38,10 @@ public class PlantEntity {
     @CreationTimestamp
     private Date createdAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "accepted_by")
+    private String acceptedBy;
+
 }

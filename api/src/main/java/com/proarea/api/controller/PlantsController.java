@@ -1,6 +1,7 @@
 package com.proarea.api.controller;
 
 import com.proarea.api.model.entity.PlantEntity;
+import com.proarea.api.model.response.PlantResponse;
 import com.proarea.api.service.PlantService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
@@ -28,7 +29,7 @@ public class PlantsController {
 //    @Secured("ROLE_ADMIN")
     @ApiOperation(value = "Get plants", authorizations = @Authorization("Authorization"))
     @RequestMapping(value = "/plants", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<PlantEntity> getPlants() {
+    public List<PlantResponse> getPlants() {
         return plantService.getAllPlants();
     }
 

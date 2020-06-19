@@ -97,4 +97,24 @@ public class UserService {
             return response;
         }).collect(Collectors.toList());
     }
+
+    public UserInfoResponse disableUser(Long id) {
+        UserEntity user = userRepository.findFirstById(id);
+
+        if (user == null) {
+            throw new BadRequestException("User not found");
+        }
+
+        user.setEnabled(false);
+
+        user = userRepository.save(user);
+
+        UserInfoResponse response = new UserInfoResponse();
+        response.setUsername(user.getUsername());
+        response.setId(user.getId());
+        response.setEnabled(user.isEnabled());
+        response.setName(user.getName());
+
+        return response;
+    }
 }

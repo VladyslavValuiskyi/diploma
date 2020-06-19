@@ -1,12 +1,10 @@
 package com.proarea.api.service;
 
 import com.proarea.api.exception.BadRequestException;
-import com.proarea.api.model.entity.PictureEntity;
-import com.proarea.api.model.entity.PlantEntity;
-import com.proarea.api.model.entity.PlantRequestEntity;
-import com.proarea.api.model.entity.PlantRequestPictureEntity;
+import com.proarea.api.model.entity.*;
 import com.proarea.api.model.request.PlantAddRequest;
 import com.proarea.api.model.request.PlantPictureRequest;
+import com.proarea.api.model.request.PlantRequestAccept;
 import com.proarea.api.model.response.PlantRequestResponse;
 import com.proarea.api.repository.PictureRepository;
 import com.proarea.api.repository.PlantRepository;
@@ -14,6 +12,7 @@ import com.proarea.api.repository.PlantRequestPictureRepository;
 import com.proarea.api.repository.PlantRequestRepository;
 import com.proarea.api.util.enums.PlantRequestStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,10 +21,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.proarea.api.util.Constants.PICTURE_URL_PLACEHOLDER;
+
 @Service
 public class PlantRequestService {
-
-    private static final String PICTURE_URL_PLACEHOLDER = "http://localhost:8086/pictures/";
 
     private final PlantRequestRepository plantRequestRepository;
     private final PlantRequestPictureRepository plantRequestPictureRepository;
@@ -43,13 +42,13 @@ public class PlantRequestService {
     }
 
     public PlantRequestResponse addPlantRequest(PlantAddRequest request) {
-        String plantName = request.getName();
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        PlantEntity plantEntity = plantRepository.findFirstByName(plantName);
-
-        if (plantEntity != null) {
-            throw new BadRequestException("Plant already exist.");
-        }
+//        PlantEntity plantEntity = plantRepository.findFirstByName(plantName);
+//
+//        if (plantEntity != null) {
+//            throw new BadRequestException("Plant already exist.");
+//        }
 
         PlantRequestEntity plantRequestEntity = new PlantRequestEntity();
         plantRequestEntity.setName(request.getName());
@@ -58,6 +57,7 @@ public class PlantRequestService {
         plantRequestEntity.setLng(request.getLng());
         plantRequestEntity.setStatus(PlantRequestStatus.CREATED.getStatus());
         plantRequestEntity.setCreatedAt(new Date());
+        plantRequestEntity.setCreatedBy(user.getUsername());
 
         plantRequestEntity = plantRequestRepository.save(plantRequestEntity);
 
@@ -108,10 +108,32 @@ public class PlantRequestService {
         return convertToPlantRequestResponse(plantRequestEntity, pictureEntities);
     }
 
-    public PlantRequestResponse acceptPlantRequest(Long id) {
+    public PlantRequestResponse acceptPlantRequest(Long id, PlantRequestAccept plantRequestAccept) {
+
+        if (plantRequestAccept != null && plantRequestAccept.getId() != null) {
+            PlantRequestEntity entity = plantRequestRepository.findFirstById(plantRequestAccept.getId());
+
+            if (entity == null) {
+                throw new BadRequestException("Plant request not found");
+            }
+
+            if(!plantRequestAccept.getId().equals(id)){
+                throw new BadRequestException("Incorrect Id it path or request body");
+            }
+
+            entity.setName(plantRequestAccept.getName());
+            entity.setDescription(plantRequestAccept.getDescription());
+            entity.setCreatedBy(plantRequestAccept.getCreatedBy());
+            entity.setLng(plantRequestAccept.getLng());
+            entity.setLat(plantRequestAccept.getLat());
+
+            plantRequestRepository.save(entity);
+
+        }
+
         PlantRequestEntity plantRequestEntity = plantRequestRepository.findFirstById(id);
 
-        if(plantRequestEntity.getName() == null || plantRequestEntity.getName().equals("")){
+        if (plantRequestEntity.getName() == null || plantRequestEntity.getName().equals("")) {
             throw new BadRequestException("Plant name shouldn't be empty");
         }
 

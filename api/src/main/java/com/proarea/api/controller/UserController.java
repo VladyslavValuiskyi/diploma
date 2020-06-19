@@ -45,7 +45,7 @@ public class UserController {
     }
 
     @Secured("ROLE_ADMIN")
-    @ApiOperation(value = "assign user to moderator")
+    @ApiOperation(value = "assign user to moderator", authorizations = @Authorization("Authorization"))
     @RequestMapping(value = "/user/assign-moderator/{userId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> assignModerator(@PathVariable Long userId) {
         userService.assignModerator(userId);
@@ -54,10 +54,17 @@ public class UserController {
     }
 
     @Secured("ROLE_ADMIN")
-    @ApiOperation(value = "get all users")
+    @ApiOperation(value = "get all users", authorizations = @Authorization("Authorization"))
     @RequestMapping(value = "/user/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UserInfoResponse> getAllUsers(){
         return userService.getAllUsers();
+    }
+
+    @Secured("ROLE_ADMIN")
+    @ApiOperation(value = "get all users", authorizations = @Authorization("Authorization"))
+    @RequestMapping(value = "/user/disable/{id}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public UserInfoResponse disableUser(@PathVariable Long id){
+        return userService.disableUser(id);
     }
 
 }
