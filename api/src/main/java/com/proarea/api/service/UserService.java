@@ -4,11 +4,18 @@ import com.proarea.api.exception.BadRequestException;
 import com.proarea.api.model.entity.AuthoritiesEntity;
 import com.proarea.api.model.entity.UserEntity;
 import com.proarea.api.model.request.RegisterRequest;
+import com.proarea.api.model.response.UserInfoResponse;
 import com.proarea.api.repository.AuthoritiesRepository;
 import com.proarea.api.repository.UserRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -20,6 +27,26 @@ public class UserService {
     public UserService(UserRepository userRepository, AuthoritiesRepository authoritiesRepository) {
         this.userRepository = userRepository;
         this.authoritiesRepository = authoritiesRepository;
+    }
+
+    public UserInfoResponse getUserInfo(Authentication authentication, Long id) {
+        UserEntity userEntity;
+        if (id == null) {
+            userEntity = (UserEntity) authentication.getPrincipal();
+        } else {
+            userEntity = userRepository.findFirstById(id);
+        }
+        UserInfoResponse response = new UserInfoResponse();
+
+        if (userEntity == null) {
+            throw new BadRequestException("User not found");
+        }
+        response.setName(userEntity.getName());
+        response.setEnabled(userEntity.isEnabled());
+        response.setId(userEntity.getId());
+        response.setUsername(userEntity.getUsername());
+
+        return response;
     }
 
     public void register(RegisterRequest request) {
@@ -44,4 +71,30 @@ public class UserService {
         authoritiesRepository.save(new AuthoritiesEntity(user.getId(), "ROLE_USER"));
     }
 
+    public void assignModerator(Long userId) {
+        UserEntity user = userRepository.findFirstById(userId);
+
+        if (user == null) {
+            throw new BadRequestException("User not found");
+        }
+
+        List<String> roles = authoritiesRepository.findAllByUserId(userId);
+        if (roles.contains("ROLE_ADMIN")) {
+            throw new BadRequestException("User is already moderator");
+        }
+
+        authoritiesRepository.save(new AuthoritiesEntity(user.getId(), "ROLE_ADMIN"));
+    }
+
+    public List<UserInfoResponse> getAllUsers() {
+        List<UserEntity> users = (List<UserEntity>) userRepository.findAll();
+        return users.stream().map(userEntity -> {
+            UserInfoResponse response = new UserInfoResponse();
+            response.setUsername(userEntity.getUsername());
+            response.setId(userEntity.getId());
+            response.setEnabled(userEntity.isEnabled());
+            response.setName(userEntity.getName());
+            return response;
+        }).collect(Collectors.toList());
+    }
 }

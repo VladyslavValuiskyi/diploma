@@ -89,7 +89,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/console/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/registration").permitAll()
                 .antMatchers(HttpMethod.POST, "/user/password/restore").permitAll()
-                .antMatchers(HttpMethod.POST, "/plants/add").hasRole("ADMIN")
+                .antMatchers(HttpMethod.GET, "/pictures/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/user/all").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/user/assign-moderator/*").hasRole("ADMIN")
+                .antMatchers(HttpMethod.GET, "/plant-request").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/plant-request/accept/*").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/plant-request/decline/*").hasRole("ADMIN")
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new CorsFilter(), ChannelProcessingFilter.class)
                 .addFilterBefore(loginProcessingFilter(authoritiesRepository), UsernamePasswordAuthenticationFilter.class)
@@ -104,7 +109,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private TokenAuthenticationFilter restTokenAuthenticationFilter() throws Exception {
         PathRequestMatcher matcher = new PathRequestMatcher(TOKEN_BASED_AUTH_ENTRY_POINT,
-                Arrays.asList("/user/registration", "/esp/register", "/esp/data", "/user/password/restore", "/console/**"));
+                Arrays.asList(
+                        "/user/registration",
+                        "/esp/register",
+                        "/esp/data",
+                        "/pictures/**",
+                        "/user/password/restore",
+                        "/console/**"));
         TokenAuthenticationFilter filter = new TokenAuthenticationFilter(matcher, webAuthenticationUnsuccessfulHandler());
         filter.setAuthenticationManager(authenticationManagerBean());
         return filter;

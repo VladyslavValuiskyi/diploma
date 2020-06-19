@@ -12,16 +12,30 @@ import java.util.Date;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "pictures")
-public class Picture {
+@Table(name = "plants_requests")
+public class PlantRequestEntity {
+
 
     @Id
+    @Column(name = "plant_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @Column(name = "base_64")
-    private String base64;
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "lat")
+    private String lat;
+
+    @Column(name = "lng")
+    private String lng;
+
+    //created, applied, declined,
+    @Column(name = "status")
+    private String status;
 
     @Column(name = "created_at")
     @CreationTimestamp

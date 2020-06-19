@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 
@@ -12,16 +11,16 @@ import javax.persistence.*;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "plant_pictures")
-public class PlantPicture {
+@Table(name = "plant_request_pictures")
+public class PlantRequestPictureEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="unique_id")
+    @Column(name = "unique_id")
     private Long id;
 
-    @Column(name = "plant_id")
-    private Long plantId;
+    @Column(name = "plant_request_id")
+    private Long plantRequestId;
 
     @Column(name = "picture_id")
     private Long pictureId;
@@ -29,10 +28,11 @@ public class PlantPicture {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "picture_id", insertable = false, updatable = false)
-    private Picture picture;
+    private PictureEntity picture;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plant_id", insertable = false, updatable = false)
-    private PlantEntity plant;
+    @JoinColumn(name = "plant_request_id", insertable = false, updatable = false)
+    private PlantRequestEntity plantRequest;
+
 }

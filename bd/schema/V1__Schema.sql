@@ -16,3 +16,6 @@ CREATE TABLE IF NOT EXISTS authorities (
   CONSTRAINT fk_authorities_users FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT ix_authority UNIQUE (user_id, authority)
 );
+
+-- to change field type
+alter table  pictures alter base_64 type text;
