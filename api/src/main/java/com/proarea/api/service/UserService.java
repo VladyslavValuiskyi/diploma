@@ -86,8 +86,14 @@ public class UserService {
         authoritiesRepository.save(new AuthoritiesEntity(user.getId(), "ROLE_ADMIN"));
     }
 
-    public List<UserInfoResponse> getAllUsers() {
-        List<UserEntity> users = (List<UserEntity>) userRepository.findAll();
+    public List<UserInfoResponse> getAllUsers(Boolean enabled) {
+        List<UserEntity> users;
+        if (enabled != null) {
+            users = userRepository.findAllByEnabled(enabled);
+        } else {
+            users = (List<UserEntity>) userRepository.findAll();
+        }
+
         return users.stream().map(userEntity -> {
             UserInfoResponse response = new UserInfoResponse();
             response.setUsername(userEntity.getUsername());

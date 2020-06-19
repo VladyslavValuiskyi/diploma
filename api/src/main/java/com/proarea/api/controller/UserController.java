@@ -5,6 +5,7 @@ import com.proarea.api.model.request.RegisterRequest;
 import com.proarea.api.model.response.UserInfoResponse;
 import com.proarea.api.repository.UserRepository;
 import com.proarea.api.service.UserService;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.ws.rs.QueryParam;
 import java.util.List;
 
 @Slf4j
@@ -57,7 +59,7 @@ public class UserController {
     @ApiOperation(value = "get all users", authorizations = @Authorization("Authorization"))
     @RequestMapping(value = "/user/all", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UserInfoResponse> getAllUsers(){
-        return userService.getAllUsers();
+        return userService.getAllUsers(true);
     }
 
     @Secured("ROLE_ADMIN")

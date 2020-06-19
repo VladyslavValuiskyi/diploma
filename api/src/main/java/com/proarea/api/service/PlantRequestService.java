@@ -118,7 +118,7 @@ public class PlantRequestService {
             }
 
             if(!plantRequestAccept.getId().equals(id)){
-                throw new BadRequestException("Incorrect Id it path or request body");
+                throw new BadRequestException("Incorrect Id in path or in request body");
             }
 
             entity.setName(plantRequestAccept.getName());
